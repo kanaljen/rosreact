@@ -4,7 +4,8 @@ import { BrowserRouter as Router, Link, Route } from 'react-router-dom'
 import io from 'socket.io-client';
 
 // Create socket
-var socket = io('http://192.168.1.209:8000/')
+var server = 'http://192.168.1.209:8000/'
+var socket = io(server)
 
 export class App extends React.Component {
   constructor() {
@@ -46,10 +47,10 @@ export class App extends React.Component {
             </div>
             <div className="ui basic segment" id="main">
               <main>
-                <Route exact path="/" render={(props) => <Dashboard {...props} />} />
-                <Route path="/nodes" render={(props) => <ItemList {...props} type="node" items={this.state.nodes}/>} />
-                <Route path="/topics" render={(props) => <ItemList {...props} type="topic" items={this.state.topics}/>} />
-                <Route path="/commands" render={(props) => <CommandCenter {...props} />} />
+                <Route exact path="/" render={(props) => <Dashboard {...props} connected = {this.state.wsConnected}/>} />
+                <Route path="/nodes" render={(props) => <ItemList {...props} connected = {this.state.wsConnected} type="node" items={this.state.nodes}/>} />
+                <Route path="/topics" render={(props) => <ItemList {...props} connected = {this.state.wsConnected} type="topic" items={this.state.topics}/>} />
+                <Route path="/commands" render={(props) => <CommandCenter {...props} connected = {this.state.wsConnected}/>} />
               </main> 
             </div>
           </div>
@@ -83,21 +84,135 @@ const Navbar = (props) => (
   </div>
 )
 
-const Dashboard = (props) => (
-  <div>Dashboard</div>
-)
-
-const ItemList = (props) => {
+const Dashboard = (props) => {
+  let comp = null
+  if(true)comp = <div>Dashboard</div>
+  else comp = <Disconnected/>
   return (
-    <div className="ui centered cards">
-      {props.items.map( (item) => <UiCard key={JSON.stringify(item)} name = {item} type = {props.type} /> )}
-    </div>
+    <div>{comp}</div>
   )
 }
 
-const CommandCenter = () => (
-  <div><h1>Command Center</h1></div>
-)
+const ItemList = (props) => {
+  if(props.connected){
+    return (
+      <div className="ui centered cards">
+        {props.items.map( (item) => <UiCard key={JSON.stringify(item)} name = {item} type = {props.type} /> )}
+      </div>
+    )
+  }
+  else return <Disconnected/>
+}
+
+const CommandCenter = (props) => {
+  if(props.connected)return (
+    <div>
+      <h1 className="ui center aligned header">Command Center</h1>
+      <div className="ui stackable two column grid container">
+        <div className="row">
+          <div className="column">
+          <div className="ui center aligned top blue attached segment">
+            <h3 class="ui center aligned header">NAVIGATION</h3></div>
+            <NavigationButtons />
+          </div>
+          <div className="column">
+            <LidarTextField />
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+  else return <Disconnected/>
+}
+
+class NavigationButtons extends React.Component {
+  constructor(props) {
+    super(props)
+    this.state = {stop: false,pause: false, play: false}
+  }
+  stop = () => {
+    if (!this.state.stop){
+      this.setState({stop: true,pause: false, play: false})
+      socket.emit('navigation','stop')
+    }
+  }
+  pause = () => {
+    if (!this.state.pause){
+      this.setState({stop: false,pause: true, play: false})
+      socket.emit('navigation','pause')
+    }
+  }
+  play = () =>  {
+    if (!this.state.play){
+      this.setState({stop: false,pause: false, play: true})
+      socket.emit('navigation','play')
+    }
+  }
+  render() {
+    return (
+      <div className="ui center aligned attached segment">
+        <h4 className="ui center aligned header">Use buttons to control navigation</h4>
+        <div class="fluid huge ui basic vertical buttons">
+          <Button active={this.state.stop}  type={'stop'} onclick={this.stop}/>
+          <Button active={this.state.pause}  type={'pause'} onclick={this.pause}/>
+          <Button active={this.state.play}  type={'play'} onclick={this.play}/>
+        </div>
+      </div>
+    )
+  }
+}
+
+const Button = (props) => {
+  let style = '',icon = null, title= null
+  if (props.type === 'stop'){
+    icon = <i class="stop icon"></i>
+    title = 'Stop Navigation'
+  }else if (props.type === 'play'){
+    icon = <i class="play icon"></i>
+    title = 'Resume Navigation'
+  }else if (props.type === 'pause'){
+    icon = <i class="pause icon"></i>
+    title = 'Pause Navigation'
+  }
+  if (props.active)style = 'ui labeled active icon button'
+  else style = 'ui labeled icon button'
+
+  return (
+      <button className={style} onClick={props.onclick}>{icon}{title}</button>
+    )
+}
+
+class LidarTextField extends React.Component {
+  constructor(props){
+    super(props)
+    this.state = {text: ''}
+  }
+  handleChange = (event) => {
+    this.setState({text: event.target.value})
+  }
+  handleSubmit= (event) => {
+    event.preventDefault()
+    socket.emit('lidartext',this.state.text)
+    this.setState({text: ''})
+  }
+  render(){
+    return(
+      <>
+        <div className="ui center aligned top green attached segment"><h3 class="ui center aligned header">DISPLAY TEXT</h3></div>
+        <div className="ui center aligned attached segment">
+          <h4 className="ui center aligned header">Set the text visible on the LIDAR!</h4>
+          
+          <form className="fluid ui action input" onSubmit={this.handleSubmit}>
+            <input className="huge ui input" type="text" value={this.state.text} onChange={this.handleChange} />
+            <button className="ui button" type="submit">Submit</button>
+          </form>
+            
+
+        </div>
+      </>
+    )
+  }
+}
 
 class UiCard extends React.Component {
   constructor(props) {
@@ -129,7 +244,7 @@ class UiCard extends React.Component {
     return (
       <div className="card">
         <div className="content">
-          <div className="header" >{this.state.name.substring(0, 29)}</div>
+          <div className="header" >{this.state.name.substring(0, 28)}</div>
           <div className="meta">{this.state.type}</div>
           <div className="description">
             {this.state.type === 'node' &&
@@ -169,27 +284,30 @@ const NodeCardDescription = (props) => {
     return (
       <div>
         {props.info.pid > 0 &&
-          <h5 className="ui header">PID: {pid}</h5>
+          <div class="ui green label">PID: {pid}</div>
+        }
+        {props.info.pid === 0 &&
+          <div class="ui yellow label">roboRIO</div>
         }
         {puplications.length > 0 &&
           <div>
             <div className="ui divider"></div>
             <h5 className="ui header">Puplications</h5>
-            <div>{puplications}</div>
+            <div style={{ wordWrap: "break-word" }}>{puplications}</div>
           </div>
         }
         {subscriptions.length > 0 &&
           <div>
             <div className="ui divider"></div>
             <h5 className="ui header">Subscriptions</h5>
-            <div>{subscriptions}</div>
+            <div style={{ wordWrap: "break-word" }}>{subscriptions}</div>
           </div>
         }
         {services.length > 0 &&
           <div>
             <div className="ui divider"></div>
             <h5 className="ui header">Services</h5>
-            <div>{services}</div>
+            <div style={{ wordWrap: "break-word" }}>{services}</div>
           </div>
         }
       </div>
@@ -218,20 +336,20 @@ const TopicCardDescription = (props) => {
     return (
       <div>
 
-        <h5 className="ui header">Type: {type}</h5>
+        <div class="ui blue label">Type: {type}</div>
 
         {publishers.length > 0 &&
           <div>
             <div className="ui divider"></div>
             <h5 className="ui header">Publishers</h5>
-            <div>{publishers}</div>
+            <div style={{ wordWrap: "break-word" }}>{publishers}</div>
           </div>
         }
         {subscribers.length > 0 &&
           <div>
             <div className="ui divider"></div>
             <h5 className="ui header">Subscribers</h5>
-            <div>{subscribers}</div>
+            <div style={{ wordWrap: "break-word" }}>{subscribers}</div>
           </div>
         }
       </div>
@@ -243,6 +361,18 @@ const TopicCardDescription = (props) => {
 
 const Loading = (props) => (
   <div className="ui active centered inline loader"></div>
+)
+
+const Disconnected = () => (
+  <div class="ui icon message">
+  <i class="notched circle loading icon"></i>
+    <div class="content">
+      <div class="header">
+        Websocket not connected
+      </div>
+      <p>Trying to reconnect at {server}</p>
+    </div>
+  </div>
 )
 
 const WsConnected = (props) => {
