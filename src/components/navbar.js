@@ -50,7 +50,7 @@ const WsConnected = props => {
 class UnicornState extends React.Component {
   constructor(props) {
     super(props);
-    this.state = { unicornState: '' };
+    this.state = { unicornState: 'Unknown' };
     socket.emit('reqstate');
   }
   componentDidMount() {

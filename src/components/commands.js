@@ -11,7 +11,9 @@ export default props => {
           <div className="row">
             <div className="column">
               <div className="ui center aligned top blue attached segment">
-                <h3 class="ui center aligned header">NAVIGATION</h3>
+                <h3 className="ui center aligned header">
+                  NAVIGATION
+                </h3>
               </div>
               <NavigationButtons />
             </div>
@@ -54,7 +56,7 @@ class NavigationButtons extends React.Component {
         <h4 className="ui center aligned header">
           Use buttons to control navigation
         </h4>
-        <div class="fluid huge ui basic vertical buttons">
+        <div className="fluid huge ui basic vertical buttons">
           <Button
             active={this.state.stop}
             type={'stop'}
@@ -81,13 +83,13 @@ const Button = props => {
     icon = null,
     title = null;
   if (props.type === 'stop') {
-    icon = <i class="stop icon"></i>;
+    icon = <i className="stop icon"></i>;
     title = 'Stop Navigation';
   } else if (props.type === 'play') {
-    icon = <i class="play icon"></i>;
+    icon = <i className="play icon"></i>;
     title = 'Resume Navigation';
   } else if (props.type === 'pause') {
-    icon = <i class="pause icon"></i>;
+    icon = <i className="pause icon"></i>;
     title = 'Pause Navigation';
   }
   if (props.active) style = 'ui labeled active icon button';
@@ -118,7 +120,7 @@ class LidarTextField extends React.Component {
     return (
       <>
         <div className="ui center aligned top green attached segment">
-          <h3 class="ui center aligned header">DISPLAY TEXT</h3>
+          <h3 className="ui center aligned header">DISPLAY TEXT</h3>
         </div>
         <div className="ui center aligned attached segment">
           <h4 className="ui center aligned header">

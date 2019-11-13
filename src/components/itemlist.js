@@ -91,10 +91,10 @@ const NodeCardDescription = props => {
     return (
       <div>
         {props.info.pid > 0 && (
-          <div class="ui green label">PID: {pid}</div>
+          <div className="ui green label">PID: {pid}</div>
         )}
         {props.info.pid === 0 && (
-          <div class="ui yellow label">roboRIO</div>
+          <div className="ui yellow label">roboRIO</div>
         )}
         {puplications.length > 0 && (
           <div>
@@ -148,7 +148,7 @@ const TopicCardDescription = props => {
     }
     return (
       <div>
-        <div class="ui blue label">Type: {type}</div>
+        <div className="ui blue label">Type: {type}</div>
 
         {publishers.length > 0 && (
           <div>
